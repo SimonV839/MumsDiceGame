@@ -40,5 +40,5 @@ Blazor Web App
 	Per page/component
 [This creates the server and the .client]
 
-Add Logging to the server (attempts to add logging to client fail)
+Add Logging to the server (this allows the client to log too)
 

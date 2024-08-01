@@ -1,0 +1,45 @@
+﻿@page "/reception"
+
+@inject ILogger<Reception> logger
+
+@rendermode InteractiveServer
+
+<h3>Reception</h3>
+
+<div>
+    <label>
+        User name (or alias):
+        <input type="text" @bind="userNameInput" maxlength="12" />
+    </label>
+</div>
+
+<div>
+    <button @onclick="SignIn" disabled="@isAttemptingSignIn">Sign in</button>
+</div>
+
+
+@code {
+    // TODO - blazer form - validation
+
+    private string? userNameInput;
+    private bool isAttemptingSignIn = false;
+
+    private async void SignIn()
+    {
+        logger.LogDebug("TODO SignIn started");
+
+        // TODO use service
+
+        isAttemptingSignIn = true;
+        StateHasChanged();
+
+        await Task.Delay(2000);
+        isAttemptingSignIn = false;
+
+        userNameInput += " - Approved";
+        StateHasChanged();
+
+        logger.LogDebug("TODO SignIn finished");
+    }
+
+}
