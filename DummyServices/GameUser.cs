@@ -1,7 +1,6 @@
-﻿using System.Net;
-using System.Xml.Linq;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Net;
 
 namespace DummyServices
 {
@@ -21,6 +20,12 @@ namespace DummyServices
         public string UserName { get; set; }
         public IPAddress UserAddress { get; set; }
 
+        public override string ToString()
+        {
+            return $"UserName: '{UserName}', UserAddress: '{UserAddress}'";
+        }
+
+        #region IEquatable
         public override bool Equals(object? obj)
         {
             var other = obj as GameUser;
@@ -28,14 +33,14 @@ namespace DummyServices
 
             return Equals(other);
         }
+
         public override int GetHashCode()
         {
-            return 0;
-            // Provide own implementation
-        }
+            int hash = UserName.GetHashCode();
+            hash ^= UserAddress.GetHashCode();
 
-        // This is the method that must be implemented to conform to the 
-        // IEquatable contract
+            return hash;
+        }
 
         public bool Equals(GameUser? other)
         {
@@ -57,6 +62,7 @@ namespace DummyServices
 
             return true;
         }
+        #endregion IEquatable
     }
 
     class IPAddressConverter : JsonConverter

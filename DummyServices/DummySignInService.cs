@@ -61,8 +61,20 @@ namespace DummyServices
                     users.Add(user);
                 }
             }
-            if (isNotPresent) { NotifyChange(); }
-            return new ServiceResponse<bool>() { Item = isNotPresent };
+
+            var res = new ServiceResponse<bool>();
+            if (isNotPresent) 
+            { 
+                res.Item = true;
+                NotifyChange(); 
+            }
+            else
+            {
+                res.Item = false;
+                res.Error = $"SignIn({user}) failed because that user is already signed in";
+            }
+
+            return res;
         }
 
         public async Task<ServiceResponse<bool>> SignOut(GameUser user)

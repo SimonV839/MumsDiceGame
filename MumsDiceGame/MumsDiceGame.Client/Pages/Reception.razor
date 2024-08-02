@@ -1,5 +1,5 @@
 ﻿@page "/reception"
-
+@inherits LayoutComponentBase
 @using Microsoft.AspNetCore.SignalR.Client
 @using MumsDiceGame.Client.HubClients
 @using DummyServices
@@ -14,18 +14,47 @@
 
 @implements IAsyncDisposable
 
+<style>
+.loader {
+    border: 16px solid #f3f3f3; /* Light grey */
+    border-top: 16px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    animation: spin 2s linear infinite;
+}
+
+@@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+</style>
+
 <h3>Reception</h3>
 
-<div>
-    <label>
-        User name (or alias):
-        <input type="text" @bind="userNameInput" maxlength="12" disabled="@(isAttemptingSignIn || !IsSignInHubConnected)" />
-    </label>
-</div>
+@if (IsBusy)
+{
+    <div class="loader">
+    </div>
+}
+else
+{
+    <div>
+        <label>
+            User name (or alias):
+            <input type="text" @bind="userNameInput" maxlength="12" autofocus/>
+        </label>
+    </div>
 
-<div>
-    <button @onclick="SignIn" disabled="@(isAttemptingSignIn || !IsSignInHubConnected)">Sign in</button>
-</div>
+    <div>
+        <button @onclick="SignIn">Sign in</button>
+    </div>
+}
 
 
 @code {
@@ -36,6 +65,7 @@
     private bool isAttemptingSignIn = false;
 
     private bool IsSignInHubConnected => hubClient != null && hubClient.HubConnectionState != null && hubClient.HubConnectionState == HubConnectionState.Connected;
+    private bool IsBusy => isAttemptingSignIn || !IsSignInHubConnected;
 
     private static IPAddress GetLocalIPAddress()
     {
@@ -73,6 +103,7 @@
         var res = await hubClient.SignIn(gameUser);
 
         isAttemptingSignIn = false;
+        StateHasChanged();
 
         if (res.IsSuccess)
         {
@@ -80,10 +111,8 @@
         }
         else
         {
-            JS.InvokeVoidAsync("alert", $"Sign in failed due to: '{res.Error}'");
+            JS.InvokeVoidAsync("alert", $"Sign in failed.{Environment.NewLine}Reason: '{res.Error}'");
         }
-
-        StateHasChanged();
 
         logger.LogDebug("TODO SignIn finished");
     }
@@ -101,11 +130,21 @@
         await hubClient.StartAsync();
     }
 
+    #region IAsyncDisposable
     public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore().ConfigureAwait(false);
+
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual async ValueTask DisposeAsyncCore()
     {
         if (hubClient != null)
         {
             await hubClient.DisposeAsync();
+            hubClient = null;
         }
     }
+    #endregion IAsyncDisposable
 }
