@@ -42,3 +42,8 @@ Blazor Web App
 
 Add Logging to the server (this allows the client to log too)
 
+Add Hub
+	ISignInService
+	reception.razor
+	Nuget: Microsoft.AspNetCore.SignalR.Client
+

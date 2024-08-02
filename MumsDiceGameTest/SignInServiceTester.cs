@@ -1,4 +1,6 @@
 using DummyServices;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace MumsDiceGameTest
 {
@@ -8,7 +10,7 @@ namespace MumsDiceGameTest
         [TestMethod]
         public void SignInSignOutSuccess()
         {
-            DummySignInService signInService = new();
+            DummySignInService signInService = new( new NullLoggerFactory().CreateLogger<DummySignInService>());
 
             {
                 var val = signInService.SignIn(new GameUser("fred", new System.Net.IPAddress(12)));
@@ -39,7 +41,7 @@ namespace MumsDiceGameTest
         [TestMethod]
         public void SignInSignOutFailure()
         {
-            DummySignInService signInService = new();
+            DummySignInService signInService = new(new NullLoggerFactory().CreateLogger<DummySignInService>());
 
             signInService.SignIn(new GameUser("fred", new System.Net.IPAddress(12))).Wait();
             signInService.SignIn(new GameUser("jane", new System.Net.IPAddress(12))).Wait();
@@ -63,7 +65,7 @@ namespace MumsDiceGameTest
         [TestMethod]
         public void IsSignedIn()
         {
-            DummySignInService signInService = new();
+            DummySignInService signInService = new(new NullLoggerFactory().CreateLogger<DummySignInService>());
 
             {
                 var val = signInService.IsSignedIn(new GameUser("fred", new System.Net.IPAddress(34)));
@@ -93,7 +95,7 @@ namespace MumsDiceGameTest
         [TestMethod]
         public void GetSignedIn()
         {
-            DummySignInService signInService = new();
+            DummySignInService signInService = new(new NullLoggerFactory().CreateLogger<DummySignInService>());
 
             {
                 var val = signInService.GetUsers();
@@ -126,7 +128,7 @@ namespace MumsDiceGameTest
         {
             eventCount = 0;
 
-            DummySignInService signInService = new();
+            DummySignInService signInService = new(new NullLoggerFactory().CreateLogger<DummySignInService>());
 
             signInService.SignIn(new GameUser("fred", new System.Net.IPAddress(12))).Wait();
             Task.Delay(10);

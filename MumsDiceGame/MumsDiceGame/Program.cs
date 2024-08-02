@@ -1,8 +1,8 @@
+using DummyServices;
 using LoggingHelpers;
-using MumsDiceGame.Client.Pages;
 using MumsDiceGame.Components;
+using MumsDiceGame.NewFoHublder;
 using Serilog;
-using Serilog.Core;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +20,8 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 builder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logger, dispose: true));
 Log.Logger.Debug("Serilog added (in addition to)");
+
+builder.Services.AddSingleton<ISignInService, DummySignInService>();
 
 var app = builder.Build();
 
@@ -44,5 +46,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(MumsDiceGame.Client._Imports).Assembly);
+
+app.MapHub<SignInHub>("/signinhub");
 
 app.Run();

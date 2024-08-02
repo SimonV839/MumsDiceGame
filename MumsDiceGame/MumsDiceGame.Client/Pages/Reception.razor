@@ -1,8 +1,9 @@
 ﻿@page "/reception"
-
+@using Microsoft.AspNetCore.SignalR.Client
 @inject ILogger<Reception> logger
-
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
+@implements IAsyncDisposable
 
 <h3>Reception</h3>
 
@@ -14,15 +15,18 @@
 </div>
 
 <div>
-    <button @onclick="SignIn" disabled="@isAttemptingSignIn">Sign in</button>
+    <button @onclick="SignIn" disabled="@(isAttemptingSignIn || !IsSignInHubConnected)">Sign in</button>
 </div>
 
 
 @code {
     // TODO - blazer form - validation
 
+    private HubConnection? signInHubConnection;
     private string? userNameInput;
     private bool isAttemptingSignIn = false;
+
+    private bool IsSignInHubConnected => signInHubConnection?.State == HubConnectionState.Connected;
 
     private async void SignIn()
     {
@@ -33,6 +37,7 @@
         isAttemptingSignIn = true;
         StateHasChanged();
 
+
         await Task.Delay(2000);
         isAttemptingSignIn = false;
 
@@ -42,4 +47,30 @@
         logger.LogDebug("TODO SignIn finished");
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        signInHubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/signinhub"))
+            .Build();
+
+            /*
+        signInHubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+        {
+            var encodedMsg = $"{user}: {message}";
+            messages.Add(encodedMsg);
+            InvokeAsync(StateHasChanged);
+        });
+        */
+
+        await signInHubConnection.StartAsync();
+
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (signInHubConnection != null)
+        {
+            await signInHubConnection.DisposeAsync();
+        }
+    }
 }

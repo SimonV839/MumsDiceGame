@@ -1,8 +1,11 @@
 ﻿
+using Microsoft.Extensions.Logging;
+
 namespace DummyServices
 {
     public class DummySignInService : ISignInService
     {
+        private ILogger<DummySignInService> logger;
         private static readonly int DummyServerDelay = 500;
 
         private List<GameUser> users = new List<GameUser>();
@@ -11,6 +14,13 @@ namespace DummyServices
         {
             //OnChange?.BeginInvoke(this, new EventArgs(), null, null); 
             OnChange?.Invoke(this, new EventArgs());
+        }
+
+        public DummySignInService(ILogger<DummySignInService> logger)
+        {
+            this.logger = logger;
+
+            logger.LogDebug(@"{DummySignInService} constructed", nameof(DummySignInService));
         }
 
         public event EventHandler OnChange = null!;
