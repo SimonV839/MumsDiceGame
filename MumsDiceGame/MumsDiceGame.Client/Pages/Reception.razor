@@ -40,6 +40,9 @@
 <h3>Reception</h3>
 
     <div>
+        <div>
+            <strong>Please sign in...</strong>
+         </div>
         <label>
             User name (or alias):
         <input type="text" @bind="userNameInput" maxlength="12" autofocus disabled="@IsBusy" />
@@ -107,7 +110,7 @@
 
         if (res.IsSuccess)
         {
-            // TODO
+            JS.InvokeVoidAsync("alert", $"Sign in succeed. Now need to do something as '{gameUser}'");
         }
         else
         {
