@@ -6,7 +6,7 @@ namespace DummyServices
     public class DummySignInService : ISignInService
     {
         private ILogger<DummySignInService> logger;
-        private static readonly int DummyServerDelay = 500;
+        private static readonly int DummyServerDelay = 1000;
 
         private List<GameUser> users = new List<GameUser>();
 
