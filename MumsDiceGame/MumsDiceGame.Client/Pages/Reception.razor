@@ -1,8 +1,17 @@
 ﻿@page "/reception"
+
 @using Microsoft.AspNetCore.SignalR.Client
+@using MumsDiceGame.Client.HubClients
+@using DummyServices
+@using System.Net
+
+@inject IJSRuntime JS
 @inject ILogger<Reception> logger
+@inject ILogger<SignInHubClient> specLogger
 @inject NavigationManager Navigation
+
 @rendermode InteractiveServer
+
 @implements IAsyncDisposable
 
 <h3>Reception</h3>
@@ -10,7 +19,7 @@
 <div>
     <label>
         User name (or alias):
-        <input type="text" @bind="userNameInput" maxlength="12" />
+        <input type="text" @bind="userNameInput" maxlength="12" disabled="@(isAttemptingSignIn || !IsSignInHubConnected)" />
     </label>
 </div>
 
@@ -22,26 +31,58 @@
 @code {
     // TODO - blazer form - validation
 
-    private HubConnection? signInHubConnection;
+    private SignInHubClient? hubClient;
     private string? userNameInput;
     private bool isAttemptingSignIn = false;
 
-    private bool IsSignInHubConnected => signInHubConnection?.State == HubConnectionState.Connected;
+    private bool IsSignInHubConnected => hubClient != null && hubClient.HubConnectionState != null && hubClient.HubConnectionState == HubConnectionState.Connected;
+
+    private static IPAddress GetLocalIPAddress()
+    {
+        var host = Dns.GetHostEntry(Dns.GetHostName());
+        foreach (var ip in host.AddressList)
+        {
+            if (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            {
+                return ip;
+            }
+        }
+        throw new ApplicationException("No network adapters with an IPv4 address in the system!");
+    }
 
     private async void SignIn()
     {
         logger.LogDebug("TODO SignIn started");
 
-        // TODO use service
+        if (hubClient == null)
+        {
+            throw new ApplicationException("Initialisatin of page failed");
+        }
+
+        if (string.IsNullOrEmpty(userNameInput))
+        {
+            // TODO need to update to form
+            return;
+        }
 
         isAttemptingSignIn = true;
         StateHasChanged();
 
+        GameUser gameUser = new(userNameInput, GetLocalIPAddress());
 
-        await Task.Delay(2000);
+        var res = await hubClient.SignIn(gameUser);
+
         isAttemptingSignIn = false;
 
-        userNameInput += " - Approved";
+        if (res.IsSuccess)
+        {
+            // TODO
+        }
+        else
+        {
+            JS.InvokeVoidAsync("alert", $"Sign in failed due to: '{res.Error}'");
+        }
+
         StateHasChanged();
 
         logger.LogDebug("TODO SignIn finished");
@@ -49,28 +90,22 @@
 
     protected override async Task OnInitializedAsync()
     {
-        signInHubConnection = new HubConnectionBuilder()
-            .WithUrl(Navigation.ToAbsoluteUri("/signinhub"))
-            .Build();
-
-            /*
-        signInHubConnection.On<string, string>("ReceiveMessage", (user, message) =>
+        var nav = Navigation;
+        //hubClient = new SignInHubClient(nav);
+        hubClient = Activator.CreateInstance(typeof(SignInHubClient), specLogger, nav) as SignInHubClient;
+        if (hubClient == null)
         {
-            var encodedMsg = $"{user}: {message}";
-            messages.Add(encodedMsg);
-            InvokeAsync(StateHasChanged);
-        });
-        */
+            throw new ApplicationException("Failed to create a SignInHubClient");
+        }
 
-        await signInHubConnection.StartAsync();
-
+        await hubClient.StartAsync();
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (signInHubConnection != null)
+        if (hubClient != null)
         {
-            await signInHubConnection.DisposeAsync();
+            await hubClient.DisposeAsync();
         }
     }
 }

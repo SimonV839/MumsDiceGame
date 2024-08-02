@@ -111,8 +111,10 @@ namespace MumsDiceGameTest
                 var val = signInService.GetUsers();
                 Assert.IsTrue(val.Result.IsSuccess &&
                     val.Result.Item != null &&
-                    val.Result.Item.Count == 1 &&
-                    val.Result.Item.First() == new GameUser("fred", new System.Net.IPAddress(12)),
+                    val.Result.Item.Count == 1,
+                    "The added valud should be present");
+                Assert.IsTrue(
+                    val.Result.Item.First().Equals(new GameUser("fred", new System.Net.IPAddress(12))),
                     "The added valud should be present");
             }
         }

@@ -52,7 +52,7 @@ namespace DummyServices
             var isNotPresent = true;
             lock (users)
             {
-                if (users.Contains(user) || users.Any(val => val.Username == user.Username))
+                if (users.Contains(user) || users.Any(val => val.UserName == user.UserName))
                 {
                     isNotPresent = false;
                 }
