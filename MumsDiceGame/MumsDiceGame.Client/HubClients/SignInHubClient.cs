@@ -1,4 +1,5 @@
 ﻿using DummyServices;
+using HubHelpers;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Newtonsoft.Json;
@@ -9,19 +10,18 @@ namespace MumsDiceGame.Client.HubClients
     {
         #region Implementation
         private HubConnection? hubConnection;
+        private HubExecutor? hubExecutor;
         private readonly NavigationManager navigationManager;
 
-        private IDisposable? signInSubscription;
-        private readonly ManualResetEvent signInResponseEvent = new(false);
-        private SimpleResponse? signInResponse;
-
+        private ILoggerFactory loggerFactory;
         private ILogger<SignInHubClient> logger;
         #endregion Implementation
 
         #region Public Interface
-        public SignInHubClient(ILogger<SignInHubClient> logger, NavigationManager navigationManager) 
+        public SignInHubClient(ILoggerFactory loggerFactory, NavigationManager navigationManager) 
         { 
-            this.logger = logger;
+            this.loggerFactory = loggerFactory;
+            this.logger = loggerFactory.CreateLogger<SignInHubClient>();
             this.navigationManager = navigationManager;
         }
 
@@ -40,6 +40,7 @@ namespace MumsDiceGame.Client.HubClients
                 .Build();
 
             await hubConnection.StartAsync();
+            hubExecutor = new(loggerFactory.CreateLogger<HubExecutor>() , hubConnection);
         }
 
         public Task<ServiceResponse<ICollection<GameUser>>> GetUsers()
@@ -52,66 +53,36 @@ namespace MumsDiceGame.Client.HubClients
             throw new NotImplementedException();
         }
 
-        private void HandleSignInResponse(string userJson, string resJson)
+        private ServiceResponse<bool> HandleSignInResponse(string userJson, string resJson)
         {
             var user = GameUserHelpers.GameUserFromJson(userJson);
             var res = JsonConvert.DeserializeObject<SimpleResponse>(resJson);
 
-            System.Diagnostics.Debug.Assert(signInResponse == null, "The signInResponse should be null here. Check threading.");
-
-            signInResponse = new SimpleResponse();
+            var signInResponse = new ServiceResponse<bool>();
             if (user == null || res == null)
-            {
-                signInResponse.Error = $"{nameof(SignIn)}({user}) invalid data received.";
-            }
+                { signInResponse.Error = $"{nameof(SignIn)}({user}) invalid data received."; }
+            else if (!string.IsNullOrEmpty(res.Error))
+                { signInResponse.Error = res.Error; }
             else
-            {
-                signInResponse.Error = res.Error;
-            }
+                { signInResponse.Item = res.IsSuccess; }
 
-            logger?.LogDebug($"{SignIn} response from hub: {user}, {res}. triggering {signInResponseEvent}",
-                nameof(SignIn), user, res, nameof(signInResponseEvent));
-            signInResponseEvent.Set();
+            return signInResponse;
         }
 
-        private static async Task AwaitEvent(EventWaitHandle ev)
-        {
-            var task = new Task(() => ev.WaitOne() );
-            task.Start();
-            await task;
-        }
-
-        public async Task<SimpleResponse> SignIn(GameUser user)
+        public async Task<ServiceResponse<bool>> SignIn(GameUser user)
         {
             logger?.LogDebug($"{SignIn}({user}) started", nameof(SignIn), user);
 
-            if (hubConnection == null)
+            if (hubConnection == null || hubExecutor == null)
             {
                 logger?.LogDebug(@"{SignIn} rejected as {StartAsync} has not been called", nameof(SignIn), nameof(StartAsync));
-                return new SimpleResponse { Error = "StartAsync must be called before attempting any other call." };
+                return new ServiceResponse<bool> { Error = "StartAsync must be called before attempting any other call." };
             }
-
-            if (signInSubscription != null)
-            {
-                logger?.LogDebug(@"{SignIn} rejected as previous attempt has not completed", nameof(SignIn));
-                return new SimpleResponse { Error = "SignIn rejected as previous attempt has not completed" };
-            }
-
-            signInResponseEvent.Reset();
-            signInResponse = null;
-            signInSubscription = hubConnection.On<string, string>("SignInResponse", HandleSignInResponse);
 
             var userJson = user.ToJson();
-            await hubConnection.SendAsync("SignIn", userJson);
+            var res = await hubExecutor.SendAndProcessResponse("SignIn", userJson, "SignInResponse", HandleSignInResponse);
 
-            logger?.LogDebug($"{nameof(SignIn)}({user}) waiting for hub response");
-            await AwaitEvent(signInResponseEvent);
-
-            signInSubscription.Dispose();
-            signInSubscription = null;
-
-            System.Diagnostics.Debug.Assert(signInResponse != null, "at this point the response from the server must have been received");
-            return signInResponse;
+            return res;
         }
 
         public Task<ServiceResponse<bool>> SignOut(GameUser user)
@@ -130,11 +101,6 @@ namespace MumsDiceGame.Client.HubClients
 
         protected virtual async ValueTask DisposeAsyncCore()
         {
-            if (signInSubscription != null)
-            {
-                signInSubscription.Dispose();
-                signInSubscription = null;
-            }
             if (hubConnection != null)
             {
                 await hubConnection.DisposeAsync().ConfigureAwait(false);

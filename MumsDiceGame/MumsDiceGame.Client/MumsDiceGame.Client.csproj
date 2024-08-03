@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\DummyServices\DummyServices.csproj" />
+    <ProjectReference Include="..\..\HubHelpers\HubHelpers.csproj" />
   </ItemGroup>
 
 </Project>

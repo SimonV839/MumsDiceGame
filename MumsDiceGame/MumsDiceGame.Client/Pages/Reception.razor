@@ -7,7 +7,7 @@
 
 @inject IJSRuntime JS
 @inject ILogger<Reception> logger
-@inject ILogger<SignInHubClient> specLogger
+@inject ILoggerFactory loggerFactory
 @inject NavigationManager Navigation
 
 @rendermode InteractiveServer
@@ -124,7 +124,7 @@
     {
         var nav = Navigation;
         //hubClient = new SignInHubClient(nav);
-        hubClient = Activator.CreateInstance(typeof(SignInHubClient), specLogger, nav) as SignInHubClient;
+        hubClient = Activator.CreateInstance(typeof(SignInHubClient), loggerFactory, nav) as SignInHubClient;
         if (hubClient == null)
         {
             throw new ApplicationException("Failed to create a SignInHubClient");

@@ -15,8 +15,7 @@ namespace MumsDiceGame.NewFoHublder
         public static readonly string SignInResponseId = "SignInResponse";
 
         private readonly ISignInService signInService;
-
-        private ILogger<SignInHub> logger;
+        private readonly ILogger<SignInHub> logger;
 
         public SignInHub(ILogger<SignInHub> logger, ISignInService service) 
         { 
@@ -36,24 +35,20 @@ namespace MumsDiceGame.NewFoHublder
             if (user == null)
             {
                 logger.LogError(@"{SignIn}({userJson}) invalid user", nameof(SignIn), userJson);
-                response.Error = $"{nameof(SignIn)}({{userJson}}) user is invalid.";
+                response.Error = $"{nameof(SignIn)}({userJson}) user is invalid.";
             }
             else
             {
                 var res = await signInService.SignIn(user);
-                if (!res.IsSuccess || !string.IsNullOrEmpty(res.Error))
+                if (res.IsSuccess)
                 {
-                    logger.LogError(@"{SignIn}({user}) failed with error: {error}", nameof(SignIn), user, res.Error);
-                    response.Error = res.Error;
-                }
-                else if (res.Item == false)
-                {
-                    logger.LogError(@"{SignIn}({user}) failed with unspecified error", nameof(SignIn), user);
-                    response.Error = $"{nameof(SignIn)} failed but did not specify why";
+                    System.Diagnostics.Debug.Assert(res.Item, "The false case should result in an error string - not the setting of the item which is a dummy value");
+                    logger.LogDebug(@"{SignIn} signed in {user}", nameof(SignIn), user);
                 }
                 else
                 {
-                    logger.LogDebug(@"{SignIn} signed in {user}", nameof(SignIn), user);
+                    logger.LogError(@"{SignIn}({user}) failed with error: {error}", nameof(SignIn), user, res.Error);
+                    response.Error = res.Error;
                 }
             }
 
