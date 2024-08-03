@@ -52,6 +52,35 @@ namespace MumsDiceGame.Client.HubClients
             throw new NotImplementedException();
         }
 
+        private void HandleSignInResponse(string userJson, string resJson)
+        {
+            var user = GameUserHelpers.GameUserFromJson(userJson);
+            var res = JsonConvert.DeserializeObject<SimpleResponse>(resJson);
+
+            System.Diagnostics.Debug.Assert(signInResponse == null, "The signInResponse should be null here. Check threading.");
+
+            signInResponse = new SimpleResponse();
+            if (user == null || res == null)
+            {
+                signInResponse.Error = $"{nameof(SignIn)}({user}) invalid data received.";
+            }
+            else
+            {
+                signInResponse.Error = res.Error;
+            }
+
+            logger?.LogDebug($"{SignIn} response from hub: {user}, {res}. triggering {signInResponseEvent}",
+                nameof(SignIn), user, res, nameof(signInResponseEvent));
+            signInResponseEvent.Set();
+        }
+
+        private static async Task AwaitEvent(EventWaitHandle ev)
+        {
+            var task = new Task(() => ev.WaitOne() );
+            task.Start();
+            await task;
+        }
+
         public async Task<SimpleResponse> SignIn(GameUser user)
         {
             logger?.LogDebug($"{SignIn}({user}) started", nameof(SignIn), user);
@@ -68,44 +97,15 @@ namespace MumsDiceGame.Client.HubClients
                 return new SimpleResponse { Error = "SignIn rejected as previous attempt has not completed" };
             }
 
+            signInResponseEvent.Reset();
+            signInResponse = null;
+            signInSubscription = hubConnection.On<string, string>("SignInResponse", HandleSignInResponse);
+
             var userJson = user.ToJson();
             await hubConnection.SendAsync("SignIn", userJson);
 
-            signInResponseEvent.Reset();
-            signInResponse = null;
-            signInSubscription = hubConnection.On<string, string>("SignInResponse",
-                (userJson, resJson) => 
-                {
-                    var user = GameUserHelpers.GameUserFromJson(userJson);
-                    var res = JsonConvert.DeserializeObject<SimpleResponse>(resJson);
-
-                    System.Diagnostics.Debug.Assert(signInResponse == null, "The signInResponse should be null here. Check threading.");
-
-                    signInResponse = new SimpleResponse();
-                    if (user == null || res == null)
-                    {
-                        signInResponse.Error = $"{nameof(SignIn)}({user}) invalid data received.";
-                    }
-                    else
-                    {
-                        signInResponse.Error = res.Error;
-                    }
-
-                    logger?.LogDebug($"{SignIn} response from hub: {user}, {res}. triggering {signInResponseEvent}",
-                        nameof(SignIn), user, res, nameof(signInResponseEvent));
-                    signInResponseEvent.Set();
-                });
-
             logger?.LogDebug($"{nameof(SignIn)}({user}) waiting for hub response");
-            var task = new Task(() => 
-            {
-                logger?.LogDebug($"waiting on signInResponseEvent");
-                signInResponseEvent.WaitOne();
-                logger?.LogDebug($"signInResponseEvent triggered");
-            });
-            task.Start();
-            await task;
-
+            await AwaitEvent(signInResponseEvent);
 
             signInSubscription.Dispose();
             signInSubscription = null;

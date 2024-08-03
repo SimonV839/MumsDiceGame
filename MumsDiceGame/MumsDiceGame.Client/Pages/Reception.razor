@@ -110,11 +110,11 @@
 
         if (res.IsSuccess)
         {
-            JS.InvokeVoidAsync("alert", $"Sign in succeed. Now need to do something as '{gameUser}'");
+            JS.InvokeVoidAsync("alert", $"Sign in succeed.{Environment.NewLine}{Environment.NewLine}Now need to do something as '{gameUser}'");
         }
         else
         {
-            JS.InvokeVoidAsync("alert", $"Sign in failed.{Environment.NewLine}Reason: '{res.Error}'");
+            JS.InvokeVoidAsync("alert", $"Sign in failed.{Environment.NewLine}{Environment.NewLine}Reason: '{res.Error}'");
         }
 
         logger.LogDebug("TODO SignIn finished");
