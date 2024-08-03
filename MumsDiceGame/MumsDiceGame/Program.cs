@@ -1,3 +1,4 @@
+using Blazored.SessionStorage;
 using DummyServices;
 using LoggingHelpers;
 using MumsDiceGame.Components;
@@ -22,6 +23,8 @@ builder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(Log.Logg
 Log.Logger.Debug("Serilog added (in addition to)");
 
 builder.Services.AddSingleton<ISignInService, DummySignInService>();
+
+builder.Services.AddBlazoredSessionStorage();
 
 var app = builder.Build();
 

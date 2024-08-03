@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\DummyServices\DummyServices.csproj" />
     <ProjectReference Include="..\MumsDiceGame.Client\MumsDiceGame.Client.csproj" />
+    <PackageReference Include="Blazored.SessionStorage" Version="2.4.0" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.7" />
     <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
     <PackageReference Include="SimonV839.LoggingHelpers" Version="1.0.1" />

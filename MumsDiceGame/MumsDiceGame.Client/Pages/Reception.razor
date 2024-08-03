@@ -1,14 +1,16 @@
 ﻿@page "/reception"
 @inherits LayoutComponentBase
+@using Blazored.SessionStorage
+@using DummyServices
 @using Microsoft.AspNetCore.SignalR.Client
 @using MumsDiceGame.Client.HubClients
-@using DummyServices
 @using System.Net
 
 @inject IJSRuntime JS
 @inject ILogger<Reception> logger
 @inject ILoggerFactory loggerFactory
 @inject NavigationManager Navigation
+@inject ISessionStorageService SessionStorage
 
 @rendermode InteractiveServer
 
@@ -41,16 +43,30 @@
 
     <div>
         <div>
+        @if (string.IsNullOrEmpty(currentUser))
+        {
             <strong>Please sign in...</strong>
-         </div>
+        }
+        else
+        {
+            <strong>Sign out, if requred...</strong>
+        }
+    </div>
         <label>
             User name (or alias):
-        <input type="text" @bind="userNameInput" maxlength="12" autofocus disabled="@IsBusy" />
+        <input type="text" @bind="userNameInput" maxlength="12" autofocus disabled="@(IsBusy || !string.IsNullOrEmpty(currentUser))" />
         </label>
     </div>
 
     <div>
-    <button @onclick="SignIn" disabled="@IsBusy">Sign in</button>
+        @if (currentUser == null)
+        {
+            <button @onclick="SignIn" disabled="@IsBusy">Sign in</button>
+        }
+        else
+        {
+            <button @onclick="SignOut" disabled="@IsBusy">Sign out</button>
+        }
     </div>
 
 @if (IsBusy)
@@ -59,15 +75,18 @@
         <div>
             @if (!IsSignInHubConnected)
             {
-                <div>
-                    Connecting to Sign In Hub ...
-                </div>
+                <div>Connecting to Sign In Hub ...</div>
             }
-            else if (isAttemptingSignIn)
+            else if (IsAttemptingSignInOut)
             {
-                <div>
-                    Signing in ...
-                </div>
+                @if(string.IsNullOrEmpty(currentUser))
+                {
+                    <div>Signing out ...</div>
+                }
+                else
+                {
+                    <div>Signing in ...</div>
+                }
             }
         </div>
     </div>
@@ -79,10 +98,11 @@
 
     private SignInHubClient? hubClient;
     private string? userNameInput;
-    private bool isAttemptingSignIn = false;
+    private bool isAttemptingSignInOut = false;
+    private string? currentUser;
 
     private bool IsSignInHubConnected => hubClient != null && hubClient.HubConnectionState != null && hubClient.HubConnectionState == HubConnectionState.Connected;
-    private bool IsBusy => isAttemptingSignIn || !IsSignInHubConnected;
+    private bool IsBusy => IsAttemptingSignInOut || !IsSignInHubConnected;
 
     private static IPAddress GetLocalIPAddress()
     {
@@ -97,41 +117,72 @@
         throw new ApplicationException("No network adapters with an IPv4 address in the system!");
     }
 
-    private async void SignIn()
+    private bool IsAttemptingSignInOut
     {
-        logger.LogDebug("TODO SignIn started");
-
-        if (hubClient == null)
+        get => isAttemptingSignInOut;
+        set
         {
-            throw new ApplicationException("Initialisatin of page failed");
+            if (isAttemptingSignInOut == value) { return; }
+
+            isAttemptingSignInOut = value;
+            StateHasChanged();
+        }
+    }
+
+    private async void SignOut()
+    {
+        if (string.IsNullOrEmpty(currentUser))
+        {
+            // TODO need to update to form
+            return;
         }
 
+        IsAttemptingSignInOut = true;
+
+        GameUser gameUser = new(currentUser, GetLocalIPAddress());
+
+        var res = await hubClient.SignOut(gameUser);
+
+        IsAttemptingSignInOut = false;
+
+        if (res.IsSuccess)
+        {
+            currentUser = null;
+            StateHasChanged();
+            await SessionStorage.RemoveItemAsync("GameUser");
+        }
+        else
+        {
+            JS.InvokeVoidAsync("alert", $"Sign out failed.{Environment.NewLine}{Environment.NewLine}Reason: '{res.Error}'");
+        }
+    }
+
+    private async void SignIn()
+    {
         if (string.IsNullOrEmpty(userNameInput))
         {
             // TODO need to update to form
             return;
         }
 
-        isAttemptingSignIn = true;
-        StateHasChanged();
+        IsAttemptingSignInOut = true;
 
         GameUser gameUser = new(userNameInput, GetLocalIPAddress());
 
         var res = await hubClient.SignIn(gameUser);
 
-        isAttemptingSignIn = false;
-        StateHasChanged();
+        IsAttemptingSignInOut = false;
 
         if (res.IsSuccess)
         {
-            JS.InvokeVoidAsync("alert", $"Sign in succeed.{Environment.NewLine}{Environment.NewLine}Now need to do something as '{gameUser}'");
+            currentUser = gameUser.UserName;
+            StateHasChanged();
+            await SessionStorage.SetItemAsync<string>("GameUser", currentUser);
         }
         else
         {
             JS.InvokeVoidAsync("alert", $"Sign in failed.{Environment.NewLine}{Environment.NewLine}Reason: '{res.Error}'");
         }
-
-        logger.LogDebug("TODO SignIn finished");
     }
 
     protected override async Task OnInitializedAsync()
@@ -145,6 +196,17 @@
         }
 
         await hubClient.StartAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            currentUser = await SessionStorage.GetItemAsync<string>("GameUser");
+            userNameInput = currentUser;
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     #region IAsyncDisposable

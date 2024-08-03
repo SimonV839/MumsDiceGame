@@ -74,6 +74,22 @@ namespace MumsDiceGame.Client.HubClients
             return signInResponse;
         }
 
+        private ServiceResponse<bool> HandleSignOutResponse(string userJson, string resJson)
+        {
+            var user = GameUserHelpers.GameUserFromJson(userJson);
+            var res = JsonConvert.DeserializeObject<SimpleResponse>(resJson);
+
+            var signOutResponse = new ServiceResponse<bool>();
+            if (user == null || res == null)
+                { signOutResponse.Error = $"{nameof(SignOut)}({user}) invalid data received."; }
+            else if (!string.IsNullOrEmpty(res.Error))
+                { signOutResponse.Error = res.Error; }
+            else
+                { signOutResponse.Item = res.IsSuccess; }
+
+            return signOutResponse;
+        }
+
         /// <summary>
         /// Asynchronously sign the user in.
         /// </summary>
@@ -95,9 +111,20 @@ namespace MumsDiceGame.Client.HubClients
             return res;
         }
 
-        public Task<ServiceResponse<bool>> SignOut(GameUser user)
+        public async Task<ServiceResponse<bool>> SignOut(GameUser user)
         {
-            throw new NotImplementedException();
+            logger?.LogDebug($"{SignOut}({user}) started", nameof(SignOut), user);
+
+            if (hubConnection == null || hubExecutor == null)
+            {
+                logger?.LogDebug(@"{SignOut} rejected as {StartAsync} has not been called", nameof(SignOut), nameof(StartAsync));
+                return new ServiceResponse<bool> { Error = "StartAsync must be called before attempting any other call." };
+            }
+
+            var userJson = user.ToJson();
+            var res = await hubExecutor.SendAndProcessResponse("SignOut", userJson, "SignOutResponse", HandleSignOutResponse);
+
+            return res;
         }
         #endregion Public Interface
 
