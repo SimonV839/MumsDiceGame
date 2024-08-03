@@ -56,6 +56,20 @@
 @if (IsBusy)
 {
     <div class="loader">
+        <div>
+            @if (!IsSignInHubConnected)
+            {
+                <div>
+                    Connecting to Sign In Hub ...
+                </div>
+            }
+            else if (isAttemptingSignIn)
+            {
+                <div>
+                    Signing in ...
+                </div>
+            }
+        </div>
     </div>
 }
 
