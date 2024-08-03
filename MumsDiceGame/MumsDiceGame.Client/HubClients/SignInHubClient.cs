@@ -11,10 +11,9 @@ namespace MumsDiceGame.Client.HubClients
         #region Implementation
         private HubConnection? hubConnection;
         private HubExecutor? hubExecutor;
+        private readonly ILoggerFactory loggerFactory;
+        private readonly ILogger<SignInHubClient> logger;
         private readonly NavigationManager navigationManager;
-
-        private ILoggerFactory loggerFactory;
-        private ILogger<SignInHubClient> logger;
         #endregion Implementation
 
         #region Public Interface
@@ -53,6 +52,12 @@ namespace MumsDiceGame.Client.HubClients
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// Handles the sign in response notification.
+        /// </summary>
+        /// <param name="userJson">the first argument (representing the user in json form)</param>
+        /// <param name="resJson">the second argument (representing the result in json form)</param>
+        /// <returns>a service response indicting success of failure. The bool value has not significance other than being true on success else null.</returns>
         private ServiceResponse<bool> HandleSignInResponse(string userJson, string resJson)
         {
             var user = GameUserHelpers.GameUserFromJson(userJson);
@@ -69,6 +74,11 @@ namespace MumsDiceGame.Client.HubClients
             return signInResponse;
         }
 
+        /// <summary>
+        /// Asynchronously sign the user in.
+        /// </summary>
+        /// <param name="user">the user to be signed in</param>
+        /// <returns>a future service response indicating success or failure</returns>
         public async Task<ServiceResponse<bool>> SignIn(GameUser user)
         {
             logger?.LogDebug($"{SignIn}({user}) started", nameof(SignIn), user);
