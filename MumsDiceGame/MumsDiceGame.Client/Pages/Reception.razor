@@ -41,14 +41,16 @@
 
 <h3>Reception</h3>
 
-<EditForm Model="@gameUser" OnSubmit="SubmitForm" FormName="ReceptionFormUnique">
+<EditForm Model="@gameUser" OnValidSubmit="SubmitForm" FormName="ReceptionFormUnique">
+    <DataAnnotationsValidator />
     <div>
         <div>
             <strong>@InstructionString</strong>
         </div>
         <label>
             User name (or alias):
-            <input type="text" @bind="gameUser.UserName" autofocus disabled="@(IsBusy || !string.IsNullOrEmpty(gameUser.UserName))" />
+            <input type="text" @bind="gameUser.UserName" autofocus disabled="@(IsBusy || !isSignedOut)" />
+            <ValidationMessage For="@(() => gameUser.UserName)" />
         </label>
         <div>
             <button type="submit" disabled="@IsBusy">@ActionString</button>
@@ -132,7 +134,6 @@
 
         IsAttemptingSignInOut = true;
 
-        System.Diagnostics.Debug.Assert(!string.IsNullOrEmpty(gameUser.UserName), "Fix code. At this stage the user name must have been set.");
         var res = await hubClient.SignOut(gameUser);
 
         IsAttemptingSignInOut = false;
@@ -158,7 +159,6 @@
 
         IsAttemptingSignInOut = true;
 
-        System.Diagnostics.Debug.Assert(!string.IsNullOrEmpty(gameUser.UserName), "Fix code. At this stage the user name must have been set.");
         var res = await hubClient.SignIn(gameUser);
 
         IsAttemptingSignInOut = false;

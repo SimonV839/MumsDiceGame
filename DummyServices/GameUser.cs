@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.ComponentModel.DataAnnotations;
 using System.Net;
 
 namespace SimonV839.DummyServices
@@ -17,7 +18,12 @@ namespace SimonV839.DummyServices
             UserAddress = userAddress;
         }
 
+        [Required(ErrorMessage = "A user name is required.")]
+        [StringLength(12, ErrorMessage = "A user name must not exceed 12 characters.")]
         public string UserName { get; set; }
+
+        // note: this is not obtained from the user so this and further validation is not required
+        [Required(ErrorMessage = "An IP address is required.")]
         public IPAddress UserAddress { get; set; }
 
         public override string ToString()
