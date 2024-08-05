@@ -6,12 +6,12 @@ using Newtonsoft.Json;
 
 namespace SimonV839.MumsDiceGame.Client.HubClients
 {
-    public class SignInHubClient : IAsyncDisposable
+    public class SignInHubClient(ILoggerFactory loggerFactory, NavigationManager navigationManager) : IAsyncDisposable
     {
         #region Implementation
-        private readonly ILoggerFactory loggerFactory;
-        private readonly ILogger<SignInHubClient> logger;
-        private readonly NavigationManager navigationManager;
+        private readonly ILoggerFactory loggerFactory = loggerFactory;
+        private readonly ILogger<SignInHubClient> logger = loggerFactory.CreateLogger<SignInHubClient>();
+        private readonly NavigationManager navigationManager = navigationManager;
         private HubConnection? hubConnection;
         private HubExecutor? hubExecutor;
 
@@ -62,12 +62,6 @@ namespace SimonV839.MumsDiceGame.Client.HubClients
         #endregion Implementation
 
         #region Public Interface
-        public SignInHubClient(ILoggerFactory loggerFactory, NavigationManager navigationManager) 
-        { 
-            this.loggerFactory = loggerFactory;
-            logger = loggerFactory.CreateLogger<SignInHubClient>();
-            this.navigationManager = navigationManager;
-        }
 
         public HubConnectionState? HubConnectionState => hubConnection?.State;
 
