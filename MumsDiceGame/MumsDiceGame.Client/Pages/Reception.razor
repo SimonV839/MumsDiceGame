@@ -41,47 +41,44 @@
 
 <h3>Reception</h3>
 
-<div>
+<EditForm Model="@gameUser" OnSubmit="SubmitForm" FormName="ReceptionFormUnique">
     <div>
-        <strong>@InstructionString</strong>
+        <div>
+            <strong>@InstructionString</strong>
+        </div>
+        <label>
+            User name (or alias):
+            <input type="text" @bind="gameUser.UserName" autofocus disabled="@(IsBusy || !string.IsNullOrEmpty(gameUser.UserName))" />
+        </label>
+        <div>
+            <button type="submit" disabled="@IsBusy">@ActionString</button>
+        </div>
     </div>
-    <label>
-        User name (or alias):
-        <input type="text" @bind="userNameInput" maxlength="12" autofocus disabled="@(IsBusy || !string.IsNullOrEmpty(currentUser))" />
-    </label>
-</div>
 
-@if (currentUser == null)
-{
-    <button @onclick="SignIn" disabled="@IsBusy">Sign in</button>
-}
-else
-{
-    <button @onclick="SignOut" disabled="@IsBusy">Sign out</button>
-}
-
-@if (IsBusy)
-{
-    <div class="loader">
-        @if (!IsSignInHubConnected) { <div>Connecting to Sign In Hub ...</div> }
-        else if (IsAttemptingSignInOut) { <div> @BusyString </div> }
-    </div>
-}
+    @if (IsBusy)
+    {
+        <div class="loader">
+            @if (!IsSignInHubConnected) { <div>Connecting to Sign In Hub ...</div> }
+            else if (IsAttemptingSignInOut) { <div>@BusyString</div> }
+        </div>
+    }
+</EditForm>
 
 
 @code {
     // TODO - blazer form - validation
 
+    private GameUser gameUser = new (string.Empty, GetLocalIPAddress());
     private SignInHubClient? hubClient;
-    private string? userNameInput;
     private bool isAttemptingSignInOut = false;
-    private string? currentUser;
+    private bool isSignedOut = true;
 
     private bool IsSignInHubConnected => hubClient != null && hubClient.HubConnectionState != null && hubClient.HubConnectionState == HubConnectionState.Connected;
     private bool IsBusy => IsAttemptingSignInOut || !IsSignInHubConnected;
 
-    private string InstructionString => currentUser == null ? "Please, sign in..." : "Sign out, if requred...";
-    private string BusyString => string.IsNullOrEmpty(currentUser) ? "Signing in ..." : "Signing out ...";
+    private string InstructionString => IsSignedOut ? "Please, sign in..." : "Sign out, if requred...";
+    private string BusyString => IsSignedOut ? "Signing in ..." : "Signing out ...";
+    private string ActionString => IsSignedOut ? "Sign in" : "Sign out";
 
     private static IPAddress GetLocalIPAddress()
     {
@@ -108,9 +105,26 @@ else
         }
     }
 
+    private bool IsSignedOut
+    {
+        get => isSignedOut;
+        set
+        {
+            if (value == isSignedOut) { return; }
+            isSignedOut = value;
+            StateHasChanged();
+        }
+    }
+
+    private void SubmitForm()
+    {
+        if (IsSignedOut) { SignIn(); }
+        else { SignOut(); }
+    }
+
     private async void SignOut()
     {
-        if (string.IsNullOrEmpty(currentUser) || hubClient == null)
+        if (IsSignedOut || hubClient == null)
         {
             // TODO need to update to form
             return;
@@ -118,16 +132,14 @@ else
 
         IsAttemptingSignInOut = true;
 
-        GameUser gameUser = new(currentUser, GetLocalIPAddress());
-
+        System.Diagnostics.Debug.Assert(!string.IsNullOrEmpty(gameUser.UserName), "Fix code. At this stage the user name must have been set.");
         var res = await hubClient.SignOut(gameUser);
 
         IsAttemptingSignInOut = false;
 
         if (res.IsSuccess)
         {
-            currentUser = null;
-            StateHasChanged();
+            IsSignedOut = true;
             await sessionStorage.RemoveItemAsync("GameUser");
         }
         else
@@ -138,7 +150,7 @@ else
 
     private async void SignIn()
     {
-        if (string.IsNullOrEmpty(userNameInput) || hubClient == null)
+        if (!IsSignedOut || hubClient == null)
         {
             // TODO need to update to form
             return;
@@ -146,17 +158,15 @@ else
 
         IsAttemptingSignInOut = true;
 
-        GameUser gameUser = new(userNameInput, GetLocalIPAddress());
-
+        System.Diagnostics.Debug.Assert(!string.IsNullOrEmpty(gameUser.UserName), "Fix code. At this stage the user name must have been set.");
         var res = await hubClient.SignIn(gameUser);
 
         IsAttemptingSignInOut = false;
 
         if (res.IsSuccess)
         {
-            currentUser = gameUser.UserName;
-            StateHasChanged();
-            await sessionStorage.SetItemAsync<string>("GameUser", currentUser);
+            IsSignedOut = false;
+            await sessionStorage.SetItemAsync<string>("GameUser", gameUser.UserName);
 
             var nav = $"{navigationManager.BaseUri}lounge";
             navigationManager.NavigateTo(nav);
@@ -169,25 +179,25 @@ else
 
     /* todo change to evacuate. currently the gui should not allow sign out unless explicitly requested
     private async void OnSignOutNotification(object? sender, GenericEventArgs<GameUser> gameUser)
-    {
+        {
         // todo: change to evacuate
         // this may be due to a requested sign out (which is handled elsewhere as a response) or a ?fire alarm?
         if (gameUser?.EventData == null || currentUser == null)
         {
-            return; // not signed in anyway
+        return; // not signed in anyway
         }
 
         if (gameUser.EventData.UserName.Equals(currentUser) &&
             gameUser.EventData.UserAddress.Equals(GetLocalIPAddress()))
-        {
+            {
             //  Simon: updating the gui from another thread
-            await InvokeAsync(() =>
-                {
+                await InvokeAsync(() =>
+                    {
                     currentUser = null;
                     StateHasChanged();
                     sessionStorage.RemoveItemAsync("GameUser");
-                });
-        }
+        });
+    }
     }
     */
 
@@ -207,8 +217,8 @@ else
     {
         if (firstRender)
         {
-            currentUser = await sessionStorage.GetItemAsync<string>("GameUser");
-            userNameInput = currentUser;
+            gameUser.UserName = await sessionStorage.GetItemAsync<string>("GameUser");
+            IsSignedOut = string.IsNullOrEmpty(gameUser.UserName);
         }
 
         await base.OnAfterRenderAsync(firstRender);
