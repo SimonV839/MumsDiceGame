@@ -1,8 +1,8 @@
-using DummyServices;
+using SimonV839.DummyServices;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace MumsDiceGameTest
+namespace SimonV839.MumsDiceGameTest
 {
     [TestClass]
     public class SignInServiceTester

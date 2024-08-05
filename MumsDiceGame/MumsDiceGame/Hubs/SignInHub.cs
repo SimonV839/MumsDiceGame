@@ -1,9 +1,9 @@
-﻿using DummyServices;
+﻿using SimonV839.DummyServices;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.SignalR;
 using Newtonsoft.Json;
 
-namespace MumsDiceGame.NewFoHublder
+namespace SimonV839.MumsDiceGame.NewFoHublder
 {
     /// <summary>
     /// SignIn hub.

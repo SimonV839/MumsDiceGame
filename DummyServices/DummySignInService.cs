@@ -1,7 +1,7 @@
 ﻿
 using Microsoft.Extensions.Logging;
 
-namespace DummyServices
+namespace SimonV839.DummyServices
 {
     public class DummySignInService : ISignInService
     {

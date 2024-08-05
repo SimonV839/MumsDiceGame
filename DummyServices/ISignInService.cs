@@ -1,5 +1,5 @@
 ﻿
-namespace DummyServices
+namespace SimonV839.DummyServices
 {
     /// <summary>
     /// Sign in service.

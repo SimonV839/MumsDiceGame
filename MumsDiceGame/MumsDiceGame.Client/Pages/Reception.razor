@@ -1,16 +1,16 @@
 ﻿@page "/reception"
 @inherits LayoutComponentBase
 @using Blazored.SessionStorage
-@using DummyServices
+@using SimonV839.DummyServices
 @using Microsoft.AspNetCore.SignalR.Client
-@using MumsDiceGame.Client.HubClients
+@using SimonV839.MumsDiceGame.Client.HubClients
 @using System.Net
 
 @inject IJSRuntime JS
 @inject ILogger<Reception> logger
 @inject ILoggerFactory loggerFactory
-@inject NavigationManager Navigation
-@inject ISessionStorageService SessionStorage
+@inject ISessionStorageService sessionStorage
+@inject NavigationManager navigationManager
 
 @rendermode InteractiveServer
 
@@ -131,7 +131,7 @@
 
     private async void SignOut()
     {
-        if (string.IsNullOrEmpty(currentUser))
+        if (string.IsNullOrEmpty(currentUser) || hubClient == null)
         {
             // TODO need to update to form
             return;
@@ -149,17 +149,17 @@
         {
             currentUser = null;
             StateHasChanged();
-            await SessionStorage.RemoveItemAsync("GameUser");
+            await sessionStorage.RemoveItemAsync("GameUser");
         }
         else
         {
-            JS.InvokeVoidAsync("alert", $"Sign out failed.{Environment.NewLine}{Environment.NewLine}Reason: '{res.Error}'");
+            await JS.InvokeVoidAsync("alert", $"Sign out failed.{Environment.NewLine}{Environment.NewLine}Reason: '{res.Error}'");
         }
     }
 
     private async void SignIn()
     {
-        if (string.IsNullOrEmpty(userNameInput))
+        if (string.IsNullOrEmpty(userNameInput) || hubClient == null)
         {
             // TODO need to update to form
             return;
@@ -177,18 +177,44 @@
         {
             currentUser = gameUser.UserName;
             StateHasChanged();
-            await SessionStorage.SetItemAsync<string>("GameUser", currentUser);
+            await sessionStorage.SetItemAsync<string>("GameUser", currentUser);
+
+            var nav = $"{navigationManager.BaseUri}lounge";
+            navigationManager.NavigateTo(nav);
         }
         else
         {
-            JS.InvokeVoidAsync("alert", $"Sign in failed.{Environment.NewLine}{Environment.NewLine}Reason: '{res.Error}'");
+            await JS.InvokeVoidAsync("alert", $"Sign in failed.{Environment.NewLine}{Environment.NewLine}Reason: '{res.Error}'");
         }
     }
 
+    /* todo change to evacuate. currently the gui should not allow sign out unless explicitly requested
+    private async void OnSignOutNotification(object? sender, GenericEventArgs<GameUser> gameUser)
+    {
+        // todo: change to evacuate
+        // this may be due to a requested sign out (which is handled elsewhere as a response) or a ?fire alarm?
+        if (gameUser?.EventData == null || currentUser == null)
+        {
+            return; // not signed in anyway
+        }
+
+        if (gameUser.EventData.UserName.Equals(currentUser) &&
+            gameUser.EventData.UserAddress.Equals(GetLocalIPAddress()))
+        {
+            //  Simon: updating the gui from another thread
+            await InvokeAsync(() =>
+                {
+                    currentUser = null;
+                    StateHasChanged();
+                    sessionStorage.RemoveItemAsync("GameUser");
+                });
+        }
+    }
+    */
+
     protected override async Task OnInitializedAsync()
     {
-        var nav = Navigation;
-        //hubClient = new SignInHubClient(nav);
+        var nav = navigationManager;
         hubClient = Activator.CreateInstance(typeof(SignInHubClient), loggerFactory, nav) as SignInHubClient;
         if (hubClient == null)
         {
@@ -202,7 +228,7 @@
     {
         if (firstRender)
         {
-            currentUser = await SessionStorage.GetItemAsync<string>("GameUser");
+            currentUser = await sessionStorage.GetItemAsync<string>("GameUser");
             userNameInput = currentUser;
         }
 

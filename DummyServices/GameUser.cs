@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Linq;
 using System.Net;
 
-namespace DummyServices
+namespace SimonV839.DummyServices
 {
     /// <summary>
     /// As user identifier
@@ -65,6 +65,7 @@ namespace DummyServices
         #endregion IEquatable
     }
 
+    // todo: currently hack
     class IPAddressConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)
@@ -82,6 +83,8 @@ namespace DummyServices
             return IPAddress.Parse((string)reader?.Value);
         }
     }
+
+    // todo: currently hack
     class IPEndPointConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)
@@ -112,6 +115,8 @@ namespace DummyServices
             return new IPEndPoint(address, port);
         }
     }
+
+    // todo: currently uses above hacks
     public static class GameUserHelpers
     {
         public static GameUser? GameUserFromJson(string jsonString)

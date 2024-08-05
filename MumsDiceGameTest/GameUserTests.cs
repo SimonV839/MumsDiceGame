@@ -1,6 +1,6 @@
-﻿using DummyServices;
+﻿using SimonV839.DummyServices;
 
-namespace MumsDiceGameTest
+namespace SimonV839.MumsDiceGameTest
 {
     [TestClass]
     public class GameUserTests

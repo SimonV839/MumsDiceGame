@@ -1,4 +1,4 @@
-﻿namespace DummyServices
+﻿namespace SimonV839.DummyServices
 {
     /// <summary>
     /// Service Response

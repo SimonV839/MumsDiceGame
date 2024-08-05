@@ -1,8 +1,8 @@
 using Blazored.SessionStorage;
-using DummyServices;
-using LoggingHelpers;
-using MumsDiceGame.Components;
-using MumsDiceGame.NewFoHublder;
+using SimonV839.DummyServices;
+using SimonV839.LoggingHelpers;
+using SimonV839.MumsDiceGame.Components;
+using SimonV839.MumsDiceGame.NewFoHublder;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -48,7 +48,7 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
-    .AddAdditionalAssemblies(typeof(MumsDiceGame.Client._Imports).Assembly);
+    .AddAdditionalAssemblies(typeof(SimonV839.MumsDiceGame.Client._Imports).Assembly);
 
 app.MapHub<SignInHub>("/signinhub");
 

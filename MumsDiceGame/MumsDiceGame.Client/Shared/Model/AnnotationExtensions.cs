@@ -1,4 +1,4 @@
-﻿namespace MumsDiceGame.Client.Shared.Model
+﻿namespace SimonV839.MumsDiceGame.Client.Shared.Model
 {
     public static class AnnotationExtensions
     {

@@ -1,26 +1,71 @@
-﻿using DummyServices;
+﻿using SimonV839.DummyServices;
 using HubHelpers;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.SignalR.Client;
 using Newtonsoft.Json;
 
-namespace MumsDiceGame.Client.HubClients
+namespace SimonV839.MumsDiceGame.Client.HubClients
 {
     public class SignInHubClient : IAsyncDisposable
     {
         #region Implementation
-        private HubConnection? hubConnection;
-        private HubExecutor? hubExecutor;
         private readonly ILoggerFactory loggerFactory;
         private readonly ILogger<SignInHubClient> logger;
         private readonly NavigationManager navigationManager;
+        private HubConnection? hubConnection;
+        private HubExecutor? hubExecutor;
+
+        /// <summary>
+        /// Handles the sign in response notification.
+        /// </summary>
+        /// <param name="userJson">the first argument (representing the user in json form)</param>
+        /// <param name="resJson">the second argument (representing the result in json form)</param>
+        /// <returns>a service response indicting success of failure. The bool value has not significance other than being true on success else null.</returns>
+        private ServiceResponse<bool> HandleSignInResponse(string userJson, string resJson)
+        {
+            var user = GameUserHelpers.GameUserFromJson(userJson);
+            var res = JsonConvert.DeserializeObject<SimpleResponse>(resJson);
+
+            var signInResponse = new ServiceResponse<bool>();
+            if (user == null || res == null)
+            { signInResponse.Error = $"{nameof(SignIn)}({user}) invalid data received."; }
+            else if (!string.IsNullOrEmpty(res.Error))
+            { signInResponse.Error = res.Error; }
+            else
+            { signInResponse.Item = res.IsSuccess; }
+
+            return signInResponse;
+        }
+
+        /// <summary>
+        /// Handles the sign out response notification.
+        /// </summary>
+        /// <param name="userJson">the first argument (representing the user in json form)</param>
+        /// <param name="resJson">the second argument (representing the result in json form)</param>
+        /// <returns>a service response indicting success of failure. The bool value has not significance other than being true on success else null.</returns>
+        private ServiceResponse<bool> HandleSignOutResponse(string userJson, string resJson)
+        {
+            var user = GameUserHelpers.GameUserFromJson(userJson);
+            var res = JsonConvert.DeserializeObject<SimpleResponse>(resJson);
+
+            var signOutResponse = new ServiceResponse<bool>();
+            if (user == null || res == null)
+            { signOutResponse.Error = $"{nameof(SignOut)}({user}) invalid data received."; }
+            else if (!string.IsNullOrEmpty(res.Error))
+            { signOutResponse.Error = res.Error; }
+            else
+            { signOutResponse.Item = res.IsSuccess; }
+
+            return signOutResponse;
+        }
+
         #endregion Implementation
 
         #region Public Interface
         public SignInHubClient(ILoggerFactory loggerFactory, NavigationManager navigationManager) 
         { 
             this.loggerFactory = loggerFactory;
-            this.logger = loggerFactory.CreateLogger<SignInHubClient>();
+            logger = loggerFactory.CreateLogger<SignInHubClient>();
             this.navigationManager = navigationManager;
         }
 
@@ -39,55 +84,8 @@ namespace MumsDiceGame.Client.HubClients
                 .Build();
 
             await hubConnection.StartAsync();
+
             hubExecutor = new(loggerFactory.CreateLogger<HubExecutor>() , hubConnection);
-        }
-
-        public Task<ServiceResponse<ICollection<GameUser>>> GetUsers()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<ServiceResponse<bool>> IsSignedIn(GameUser user)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Handles the sign in response notification.
-        /// </summary>
-        /// <param name="userJson">the first argument (representing the user in json form)</param>
-        /// <param name="resJson">the second argument (representing the result in json form)</param>
-        /// <returns>a service response indicting success of failure. The bool value has not significance other than being true on success else null.</returns>
-        private ServiceResponse<bool> HandleSignInResponse(string userJson, string resJson)
-        {
-            var user = GameUserHelpers.GameUserFromJson(userJson);
-            var res = JsonConvert.DeserializeObject<SimpleResponse>(resJson);
-
-            var signInResponse = new ServiceResponse<bool>();
-            if (user == null || res == null)
-                { signInResponse.Error = $"{nameof(SignIn)}({user}) invalid data received."; }
-            else if (!string.IsNullOrEmpty(res.Error))
-                { signInResponse.Error = res.Error; }
-            else
-                { signInResponse.Item = res.IsSuccess; }
-
-            return signInResponse;
-        }
-
-        private ServiceResponse<bool> HandleSignOutResponse(string userJson, string resJson)
-        {
-            var user = GameUserHelpers.GameUserFromJson(userJson);
-            var res = JsonConvert.DeserializeObject<SimpleResponse>(resJson);
-
-            var signOutResponse = new ServiceResponse<bool>();
-            if (user == null || res == null)
-                { signOutResponse.Error = $"{nameof(SignOut)}({user}) invalid data received."; }
-            else if (!string.IsNullOrEmpty(res.Error))
-                { signOutResponse.Error = res.Error; }
-            else
-                { signOutResponse.Item = res.IsSuccess; }
-
-            return signOutResponse;
         }
 
         /// <summary>

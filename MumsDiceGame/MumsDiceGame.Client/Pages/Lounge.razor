@@ -1,0 +1,27 @@
+﻿@page "/lounge"
+
+@using Blazored.SessionStorage
+
+@inject IJSRuntime JS
+@inject ISessionStorageService sessionStorage
+@inject NavigationManager navigationManager
+
+<h3>Lounge</h3>
+
+@code {
+    private string? currentUser;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        currentUser = await sessionStorage.GetItemAsync<string>("GameUser");
+        if (currentUser == null)
+        {
+            await JS.InvokeVoidAsync("alert", $"To view this page, please first sign in.");
+        }
+
+        var nav = $"{navigationManager.BaseUri}reception";
+        navigationManager.NavigateTo(nav);
+    }
+}

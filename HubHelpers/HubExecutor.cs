@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
-using DummyServices;
+using SimonV839.DummyServices;
 
 namespace HubHelpers
 {
