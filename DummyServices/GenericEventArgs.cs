@@ -1,5 +1,4 @@
-﻿/* todo
-namespace SimonV839.MumsDiceGame.Client.HubClients
+﻿namespace SimonV839.DummyServices
 {
     // was used for unsolicited sign out but as this should never occur - not used yet
     public class GenericEventArgs<T> : EventArgs
@@ -12,4 +11,3 @@ namespace SimonV839.MumsDiceGame.Client.HubClients
         }
     }
 }
-*/

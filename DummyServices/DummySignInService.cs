@@ -1,5 +1,6 @@
 ﻿
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography.X509Certificates;
 
 namespace SimonV839.DummyServices
 {
@@ -29,10 +30,7 @@ namespace SimonV839.DummyServices
         {
             await Task.Delay(DummyServerDelay);
 
-            lock(users)
-            {
-                return new ServiceResponse<ICollection<GameUser>>() { Item = users.ToList() };
-            }
+            return new ServiceResponse<ICollection<GameUser>>() { Item = GetAllUsers() };
         }
 
         public async Task<ServiceResponse<bool>> IsSignedIn(GameUser user)
@@ -88,6 +86,22 @@ namespace SimonV839.DummyServices
             }
             if (isRemoved) { NotifyChange(); }
             return new ServiceResponse<bool>() { Item = isRemoved };
+        }
+
+        public ICollection<GameUser> GetAllUsers()
+        {
+            lock (users)
+            {
+                return users;
+            }
+        }
+        // todo - implement with db - for now concentrating on serivce
+        public GameUser? GetUserByName(string userName)
+        {
+            lock (users)
+            {
+                return users.First(u => u.UserName.Equals(userName));
+            }
         }
     }
 }
