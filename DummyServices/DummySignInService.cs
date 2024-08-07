@@ -100,6 +100,8 @@ namespace SimonV839.DummyServices
         /// <returns>the id of the new match, else 0 indicating a request is pending... or error </returns>
         public async Task<ServiceResponse<int>> RequestAnyOpponent(GameUser gameUser)
         {
+            throw new Exception("");
+            /*
             GameRequest? existingReq;
             Game? newGame;
             lock(users)
@@ -148,6 +150,7 @@ namespace SimonV839.DummyServices
             // inform opponent
 
             // inform requestor
+            */
         }
 
         public Task<ServiceResponse<int>> RequestSpecificOpponent(string opponentName)

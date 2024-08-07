@@ -18,10 +18,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DummyServices", "DummyServi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HubHelpers", "HubHelpers\HubHelpers.csproj", "{A5F1ACB9-0EB2-482F-956D-CD5FA7FE4F98}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DbScripts", "DbScripts", "{A8DA91E5-9141-4697-9FA4-6AD07D6CFAA6}"
-	ProjectSection(SolutionItems) = preProject
-		DbScripts\TableCreation.sql = DbScripts\TableCreation.sql
-	EndProjectSection
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EfDbFirstConsole", "EfDbFirstConsole\EfDbFirstConsole.csproj", "{4714C929-C751-481A-9948-16701047B69B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +46,10 @@ Global
 		{A5F1ACB9-0EB2-482F-956D-CD5FA7FE4F98}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5F1ACB9-0EB2-482F-956D-CD5FA7FE4F98}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5F1ACB9-0EB2-482F-956D-CD5FA7FE4F98}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4714C929-C751-481A-9948-16701047B69B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4714C929-C751-481A-9948-16701047B69B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4714C929-C751-481A-9948-16701047B69B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4714C929-C751-481A-9948-16701047B69B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
