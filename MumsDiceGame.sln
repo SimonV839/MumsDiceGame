@@ -18,6 +18,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DummyServices", "DummyServi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HubHelpers", "HubHelpers\HubHelpers.csproj", "{A5F1ACB9-0EB2-482F-956D-CD5FA7FE4F98}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DbScripts", "DbScripts", "{A8DA91E5-9141-4697-9FA4-6AD07D6CFAA6}"
+	ProjectSection(SolutionItems) = preProject
+		DbScripts\TableCreation.sql = DbScripts\TableCreation.sql
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

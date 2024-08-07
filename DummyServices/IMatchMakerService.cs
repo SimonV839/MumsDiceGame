@@ -2,7 +2,7 @@
 {
     public interface IMatchMakerService
     {
-        Task<ServiceResponse<int>> RequestAnyOpponent();
+        Task<ServiceResponse<int>> RequestAnyOpponent(GameUser gameUser);
 
         Task<ServiceResponse<int>> RequestSpecificOpponent(string opponentName);
 
